@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-
-
 def tag_iob2(len, entity):
     if entity is None:
         return ['O'] * len
