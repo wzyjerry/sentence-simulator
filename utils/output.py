@@ -1,3 +1,4 @@
+import json
 import codecs
 
 
@@ -13,7 +14,10 @@ def output(result, level, tag, fout):
     content = []
     for item in result:
         if level == Output.DEBUG_LEVEL:
-            content.append('%s\t%s\n' % (item[0], item[1]))
+            content.append({
+                'node': item[0],
+                'text': item[1]
+            })
         elif item[1] is not None:
             sentence.append(item[1])
             token = item[1]
@@ -29,6 +33,8 @@ def output(result, level, tag, fout):
             intent = item[2]
     if level == Output.SENTENCE_LEVEL:
         fout.write('%s\t%s\n' % (intent, ' '.join(sentence)))
+    elif level == Output.DEBUG_LEVEL:
+        fout.write('%s\n' % json.dumps(content, ensure_ascii=False))
     else:
         for item in content:
             fout.write(item)
