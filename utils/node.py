@@ -15,21 +15,29 @@ class Node(object):
         self.index = None
         self.data = {}
         self.parent = parent
-        self.children = None
+        self.children = []
         self.weights = None
 
-    def generate(self, file_map):
-        result = []
-        result.append(('B-%d' % self.index, None, None))
-        if self.data['type'] in ('root', 'intent', 'pick_one'):
+    def generate(self, file_map, result={}):
+        result = {
+            'index': self.index
+        }
+        if self.data['type'] in ('root', 'intent'):
             i = weighted_sample(self.weights)
             if self.data['type'] == 'intent':
-                result[-1] = ('B-%d' % self.index, None, self.data['intent'])
-            result.extend(self.children[i].generate(file_map))
-            result.append(('I-%d' % self.index, None, None))
+                result['intent'] = self.data['intent']
+            ret = self.children[i].generate(file_map)
+            if ret is not None:
+                result['children'] = [ret]
+            return result
         else:
             if random.random() >= self.data['dropout']:
-                if self.data['type'] == 'content':
+                if self.data['type'] == 'pickone':
+                    i = weighted_sample(self.weights)
+                    ret = self.children[i].generate(file_map)
+                    if ret is not None:
+                        result['children'] = [ret]
+                elif self.data['type'] == 'content':
                     text = None
                     if self.data['from_file']:
                         text = random.choice(file_map[self.data['filename']])
@@ -41,19 +49,22 @@ class Node(object):
                             if random.random() > self.data['word_cut']:
                                 n_text.append(ch)
                         text = ''.join(n_text)
-                    result.append(('I-%d' % self.index, text, self.data.get('entity')))
+                    result['text'] = text
+                    if 'entity' in self.data:
+                        result['entity'] = self.data['entity']
                 else:
                     # order & exchangeable
-                    returns = []
+                    children = []
                     for child in self.children:
                         ret = child.generate(file_map)
-                        ret.append(('I-%d' % self.index, None, None))
-                        returns.append(ret)
+                        if ret is not None:
+                            children.append(ret)
                     if self.data['type'] == 'exchangeable':
-                        index = range(len(returns))
+                        index = range(len(children))
                         random.shuffle(list(index))
-                        returns = [returns[i] for i in index]
-                    for item in returns:
-                        result.extend(item)
-        result[-1] = ('E-%d' % self.index, result[-1][1], result[-1][2])
+                        children = [children[i] for i in index]
+                    if len(children):
+                        result['children'] = children
+            else:
+                return None
         return result

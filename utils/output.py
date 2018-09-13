@@ -2,43 +2,44 @@ import json
 import codecs
 
 
+def _output_result(node, level, tag):
+    content = []
+    if 'text' in node:
+        if level == Output.SENTENCE_LEVEL:
+           content.append(node['text'])
+        else:
+            token = node['text']
+            if level == Output.WORD_LEVEL:
+                token = token.split()
+            for text in zip(list(token), tag(len(token), node.get('entity'))):
+                content.append('%s\t%s\n' % text)
+    if 'children' in node:
+        for child in node['children']:
+            if level == Output.CHAR_LEVEL and len(content):
+                content.append(' \tO\n')
+            content.extend(_output_result(child, level, tag))
+    return content
+
+
 def output(result, level, tag, fout):
     '''
-    调试级: '%node\t%text\n'
+    调试级: 'json'
     字符级: '%char\t%eneity\n'
     词级: '%word\t%entity\n'
     句级: '%intent\t%sentence'
     '''
-    intent = None
-    sentence = []
-    content = []
-    for item in result:
-        if level == Output.DEBUG_LEVEL:
-            content.append({
-                'node': item[0],
-                'text': item[1]
-            })
-        elif item[1] is not None:
-            sentence.append(item[1])
-            token = item[1]
-            if level == Output.WORD_LEVEL:
-                token = token.split()
-            temp = []
-            for text in zip(list(token), tag(len(token), item[2])):
-                temp.append('%s\t%s\n' % text)
-            if level == Output.CHAR_LEVEL and len(content):
-                content.append(' \tO\n')
-            content.extend(temp)
-        elif item[2] is not None:
-            intent = item[2]
-    if level == Output.SENTENCE_LEVEL:
-        fout.write('%s\t%s\n' % (intent, ' '.join(sentence)))
-    elif level == Output.DEBUG_LEVEL:
-        fout.write('%s\n' % json.dumps(content, ensure_ascii=False))
+    if level == Output.DEBUG_LEVEL:
+        fout.write(json.dumps(result, ensure_ascii=False))
     else:
-        for item in content:
-            fout.write(item)
-        fout.write('\n')
+        content = _output_result(result, level, tag)
+        if level == Output.SENTENCE_LEVEL:
+            fout.write(result['children'][0]['intent'])
+            fout.write('\t')
+            fout.write(' '.join(content))
+        else:
+            for item in content:
+                fout.write(item)
+    fout.write('\n')
 
 
 class Output(object):
