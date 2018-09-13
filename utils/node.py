@@ -23,6 +23,8 @@ class Node(object):
         result.append(('B-%d' % self.index, None, None))
         if self.data['type'] in ('root', 'intent', 'pick_one'):
             i = weighted_sample(self.weights)
+            if self.data['type'] == 'intent':
+                result[-1] = ('B-%d' % self.index, None, self.data['intent'])
             result.extend(self.children[i].generate(file_map))
             result.append(('I-%d' % self.index, None, None))
         else:
