@@ -6,6 +6,7 @@ from numpy import random
 from utils.tag import tag_iobes
 from utils.hierarchy import check_file_set, hierarchy, str_stat
 from utils.output import Output
+from utils.generate_tree import generate
 
 
 def main():
@@ -22,6 +23,12 @@ def main():
             output.addOutput(Output.WORD_LEVEL, 'data/out/word.txt', tag_iobes)
             output.addOutput(Output.SENTENCE_LEVEL, 'data/out/sentence.txt', tag_iobes)
             output.generate(100)
+            with codecs.open('data/out/tree.json', 'w', 'utf-8') as fout:
+                root = generate(root)
+                children = root['children']
+                root['children'] = [data['children'][0]]
+                root['children'].extend(children)
+                fout.write(json.dumps(root, ensure_ascii=False))
 
 
 if __name__ == '__main__':

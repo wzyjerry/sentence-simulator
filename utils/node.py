@@ -20,8 +20,11 @@ class Node(object):
 
     def generate(self, file_map, result={}):
         result = {
-            'index': self.index
+            'index': self.index,
+            'type': self.data['type']
         }
+        if 'name' in self.data:
+            result['name'] = self.data['name']
         if self.data['type'] in ('root', 'intent'):
             i = weighted_sample(self.weights)
             if self.data['type'] == 'intent':
