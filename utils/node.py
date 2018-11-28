@@ -18,7 +18,7 @@ class Node(object):
         self.children = []
         self.weights = None
 
-    def generate(self, file_map, result={}):
+    def generate(self, entity_map, result={}):
         result = {
             'index': self.index,
             'type': self.data['type']
@@ -29,7 +29,7 @@ class Node(object):
             i = weighted_sample(self.weights)
             if self.data['type'] == 'intent':
                 result['intent'] = self.data['intent']
-            ret = self.children[i].generate(file_map)
+            ret = self.children[i].generate(entity_map)
             if ret is not None:
                 result['children'] = [ret]
             return result
@@ -37,13 +37,14 @@ class Node(object):
             if random.random() >= self.data['dropout']:
                 if self.data['type'] == 'pickone':
                     i = weighted_sample(self.weights)
-                    ret = self.children[i].generate(file_map)
+                    ret = self.children[i].generate(entity_map)
                     if ret is not None:
                         result['children'] = [ret]
                 elif self.data['type'] == 'content':
                     text = None
-                    if self.data['from_file']:
-                        text = random.choice(file_map[self.data['filename']])
+                    if self.data['isEntity']:
+                        text = random.choice(entity_map[self.data['entity']]['entries'])
+                        result['entity'] = entity_map[self.data['entity']]['name']
                     else:
                         text = random.choice(self.data['content'])
                     if random.random() < self.data['cut']:
@@ -53,13 +54,11 @@ class Node(object):
                                 n_text.append(ch)
                         text = ''.join(n_text)
                     result['text'] = text
-                    if 'entity' in self.data:
-                        result['entity'] = self.data['entity']
                 else:
                     # order & exchangeable
                     children = []
                     for child in self.children:
-                        ret = child.generate(file_map)
+                        ret = child.generate(entity_map)
                         if ret is not None:
                             children.append(ret)
                     if self.data['type'] == 'exchangeable':

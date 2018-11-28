@@ -48,9 +48,9 @@ class Output(object):
     WORD_LEVEL = 3
     SENTENCE_LEVEL = 4
 
-    def __init__(self, root, file_map):
+    def __init__(self, root, entity_map):
         self.__root = root
-        self.__file_map = file_map
+        self.__entity_map = entity_map
         self.__outputs = []
 
     def addOutput(self, level, filename, tag):
@@ -58,7 +58,7 @@ class Output(object):
 
     def generate(self, num=None):
         if num is None:
-            result = self.__root.generate(self.__file_map)
+            result = self.__root.generate(self.__entity_map)
             for item in self.__outputs:
                 with codecs.open(item[1], 'a', 'utf-8') as fout:
                     output(result, item[0], item[2], fout)
@@ -66,8 +66,8 @@ class Output(object):
             file_list = []
             for item in self.__outputs:
                 file_list.append(codecs.open(item[1], 'w', 'utf-8'))
-            for i in range(num):
-                result = self.__root.generate(self.__file_map)
+            for _ in range(num):
+                result = self.__root.generate(self.__entity_map)
                 for item in zip(self.__outputs, file_list):
                     output(result, item[0][0], item[0][2], item[1])
                     item[1].flush()

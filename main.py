@@ -1,36 +1,33 @@
-import codecs
 import json
+import codecs
+import argparse
 
 from numpy import random
 
 from utils.tag import tag_iobes
-from utils.hierarchy import check_file_set, hierarchy, str_stat
+from utils.hierarchy import hierarchy, link_entity, str_stat
 from utils.output import Output
-from utils.generate_tree import generate
 
+random.seed(0)
 
-def main():
-    with codecs.open('data/syntaxTree.json', 'r', 'utf-8') as fin:
-        data = json.load(fin)
-        result = hierarchy(data)
-        if result[0]:
-            file_map = check_file_set(result[2])
-            root = result[1]
-            print(str_stat(result[2]))
-            output = Output(root, file_map)
-            output.addOutput(Output.DEBUG_LEVEL, 'data/out/debug.txt', tag_iobes)
-            output.addOutput(Output.CHAR_LEVEL, 'data/out/char.txt', tag_iobes)
-            output.addOutput(Output.WORD_LEVEL, 'data/out/word.txt', tag_iobes)
-            output.addOutput(Output.SENTENCE_LEVEL, 'data/out/sentence.txt', tag_iobes)
-            output.generate(100)
-            with codecs.open('data/out/tree.json', 'w', 'utf-8') as fout:
-                root = generate(root)
-                children = root['children']
-                root['children'] = [data['children'][0]]
-                root['children'].extend(children)
-                fout.write(json.dumps(root, ensure_ascii=False))
+parser = argparse.ArgumentParser()
+parser.add_argument('-f', '--file', required=True, help='input file')
+parser.add_argument('-w', '--lv_word', help='word level output')
+parser.add_argument('-s', '--lv_sentence', help='sentence level')
+parser.add_argument('-c', '--count', type=int, help='sentence count', default=1000)
 
+args = parser.parse_args()
 
-if __name__ == '__main__':
-    random.seed(0)
-    main()
+with codecs.open(args.file, 'r', encoding='utf-8') as fin:
+  setting = json.load(fin)
+  result = hierarchy(setting['rule'])
+  if result[0]:
+    root = result[1]
+    entity_map = link_entity(result[2], setting['entity'])
+    print(str_stat(result[2], entity_map))
+    output = Output(root, entity_map)
+    if args.lv_word is not None:
+      output.addOutput(Output.WORD_LEVEL, args.lv_word, tag_iobes)
+    if args.lv_sentence is not None:
+      output.addOutput(Output.SENTENCE_LEVEL, args.lv_sentence, tag_iobes)
+    output.generate(args.count)

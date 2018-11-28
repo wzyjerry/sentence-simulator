@@ -32,10 +32,8 @@ def hierarchy(data, parent=None, index=0):
     node.index = index
     index += 1
     stat = {
-        # 【集合1：文件集合】
-        'file_set': set(),
-        # 【集合2：实体集合】
-        'entity_set': set(),
+        # 【实体集合】
+        'entity': set(),
         # 下一个可用的编号
         'index': index,
         # 统计信息
@@ -69,16 +67,16 @@ def hierarchy(data, parent=None, index=0):
         if parent != None and parent.data['type'] in ('pickone', 'intent'):
             _check_set_float(node, data, 'weight', 1.0)
     elif node.data['type'] == 'content':
-        if 'from_file' not in data:
-            raise_error(
-                'Key "from_file" not found nearby "...%s...", content node must contains key "from_file".' % str(data)[:64])
-        node.data['from_file'] = bool(data['from_file'])
-        if node.data['from_file']:
-            if 'filename' not in data:
+        if 'isEntity' not in data:
+            node.data['isEntity'] = False
+        else:
+            node.data['isEntity'] = bool(data['isEntity'])
+        if node.data['isEntity']:
+            if 'entity' not in data:
                 raise_error(
-                    'Key "filename" not found nearby "...%s...", content node from file must contains key "filename".' % str(data)[:64])
-            node.data['filename'] = data['filename']
-            stat['file_set'].add(node.data['filename'])
+                    'Key "entity" not found nearby "...%s...", entity content node must contains key "entity".' % str(data)[:64])
+            node.data['entity'] = data['entity']
+            stat['entity'].add(node.data['entity'])
         else:
             if 'content' not in data or not isinstance(data['content'], Iterable):
                 return (False, )
@@ -86,9 +84,6 @@ def hierarchy(data, parent=None, index=0):
             stat['n_tag'] += len(data['content'])
             for item in data['content']:
                 node.data['content'].append(item)
-        if 'entity' in data:
-            node.data['entity'] = data['entity']
-            stat['entity_set'].add(node.data['entity'])
         _set_if_exist(node, data, 'name')
         if parent != None and parent.data['type'] in ('pickone', 'intent'):
             _check_set_float(node, data, 'weight', 1.0)
@@ -111,8 +106,7 @@ def hierarchy(data, parent=None, index=0):
             if result[0]:
                 node.children.append(result[1])
                 r_st = result[2]
-                stat['file_set'].update(r_st['file_set'])
-                stat['entity_set'].update(r_st['entity_set'])
+                stat['entity'].update(r_st['entity'])
                 stat['index'] = r_st['index']
                 stat['n_intent'] += r_st['n_intent']
                 stat['n_pickone'] += r_st['n_pickone']
@@ -130,7 +124,7 @@ def hierarchy(data, parent=None, index=0):
     return True, node, stat
 
 
-def str_stat(stat):
+def str_stat(stat, entity_map):
     result = []
     result.append('Compile completed. Total nodes: %d' % stat['index'])
     result.append(
@@ -144,41 +138,38 @@ def str_stat(stat):
     result.append('-' * 20)
     result.append('Total tags: %d' % stat['n_tag'])
     result.append('=' * 80)
-    result.append('File set:')
-    for item in list(stat['file_set']):
-        result.append(item)
-    result.append('=' * 80)
     result.append('Entity set:')
-    for item in list(stat['entity_set']):
-        result.append(item)
+    for item in list(stat['entity']):
+        result.append('%s --> %s' % (item, entity_map[item]['name']))
     result.append('=' * 80)
     result.append('Over.')
     return '\n'.join(result)
 
 
-def check_file_set(stat, data_root='data'):
-    file_map = {}
-    for item in list(stat['file_set']):
-        filename = os.path.join(data_root, item)
-        if not os.path.isfile(filename):
-            raise_error('File "%s" not exists.' % filename)
-        with codecs.open(filename, 'r', 'utf-8') as fin:
-            tokens = []
-            for line in fin:
-                tokens.append(' '.join(line.split()[:-1]))
-            file_map[item] = tokens
-    return file_map
+def link_entity(stat, entity):
+    all_entity = {}
+    for item in entity:
+        all_entity[item['id']] = {
+            'name': item['name'],
+            'entries': item['entries']
+        }
+    entity_map = {}
+    for item in list(stat['entity']):
+        if item not in all_entity:
+            raise_error('Entity "%s" not exists.' % item)
+        entity_map[item] = all_entity[item]
+    return entity_map
 
 
-def test():
-    import json
-    with codecs.open('data/syntaxTree.json', 'r', 'utf-8') as fin:
-        data = json.load(fin)
-        result = hierarchy(data)
-        if result[0]:
-            print(str_stat(result[2]))
-            check_file_set(result[2])
+# def test():
+#     import json
+#     with codecs.open('data/syntaxTree.json', 'r', 'utf-8') as fin:
+#         data = json.load(fin)
+#         result = hierarchy(data)
+#         if result[0]:
+#             print(str_stat(result[2]))
+#             check_file_set(result[2])
 
 
-if __name__ == '__main__':
-    test()
+# if __name__ == '__main__':
+#     test()
