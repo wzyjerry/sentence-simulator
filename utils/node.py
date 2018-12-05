@@ -43,7 +43,7 @@ class Node(object):
                 elif self.data['type'] == 'content':
                     text = None
                     if self.data['isEntity']:
-                        text = random.choice(entity_map[self.data['entity']]['entries'])
+                        text = entity_map[self.data['entity']]['entries'][random.choice(len(entity_map[self.data['entity']]['entries']))]
                         result['entity'] = entity_map[self.data['entity']]['name']
                     else:
                         text = random.choice(self.data['content'])
