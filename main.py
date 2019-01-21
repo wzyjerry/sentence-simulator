@@ -4,7 +4,7 @@ import argparse
 
 from numpy import random
 
-from utils.tag import tag_iobes
+from utils.tag import tag_iob2
 from utils.hierarchy import hierarchy, link_entity, str_stat
 from utils.output import Output
 
@@ -27,7 +27,7 @@ with codecs.open(args.file, 'r', encoding='utf-8') as fin:
     print(str_stat(result[2], entity_map))
     output = Output(root, entity_map)
     if args.lv_word is not None:
-      output.addOutput(Output.WORD_LEVEL, args.lv_word, tag_iobes)
+      output.addOutput(Output.WORD_LEVEL, args.lv_word, tag_iob2)
     if args.lv_sentence is not None:
-      output.addOutput(Output.SENTENCE_LEVEL, args.lv_sentence, tag_iobes)
+      output.addOutput(Output.SENTENCE_LEVEL, args.lv_sentence, tag_iob2)
     output.generate(args.count)

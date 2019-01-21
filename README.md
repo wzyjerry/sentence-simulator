@@ -1,4 +1,4 @@
-# sentence-simulator 0.2.0
+# sentence-simulator 1.0.0
 根据语法规则生成模拟句子
 > 语法规则及交互树详见 [interactive-syntax-tree](https://wzyjerry.github.io/interactive-syntax-tree/)
 ---
@@ -32,7 +32,7 @@
 1. 编译语法树（编译错误给出提示，结束）
     1. 删除holder节点及其子节点
     2. 对于每个intent进行编译，检查每个节点类型，对于每种类型的节点，补全初始值，删除无效字段
-    3. 对于每个content->isEntity节点，汇总entityID生成 **【实体集合】**
+    3. 对于每个content->isSlot节点，汇总entityID生成 **【实体集合】**
     4. 删除后代中不包含content节点的节点
     5. 对需要权重采样的节点抽取后代weight字段生成对应数组
     6. 先序标记节点id（根节点标记为0）
@@ -45,3 +45,6 @@
 
 ## 示例
 python main.py -f data/input.json -c 10 -w data/out/word.txt -s data/out/sent.txt
+
+---
+v1.0.0 修改标记类型为iob2，修改entity content node

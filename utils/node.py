@@ -42,9 +42,12 @@ class Node(object):
                         result['children'] = [ret]
                 elif self.data['type'] == 'content':
                     text = None
-                    if self.data['isEntity']:
+                    if self.data['isSlot']:
                         text = entity_map[self.data['entity']]['entries'][random.choice(len(entity_map[self.data['entity']]['entries']))]
-                        result['entity'] = entity_map[self.data['entity']]['name']
+                        if self.data['slot'] == '':
+                            result['entity'] = entity_map[self.data['entity']]['name']
+                        else:
+                            result['entity'] = self.data['slot']
                     else:
                         text = random.choice(self.data['content'])
                     if random.random() < self.data['cut']:
