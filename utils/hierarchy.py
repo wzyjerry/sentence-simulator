@@ -69,18 +69,22 @@ def hierarchy(data, parent=None, index=0):
     elif node.data['type'] == 'content':
         if 'isSlot' not in data:
             node.data['isSlot'] = False
+            if 'isEntity' not in data:
+                node.data['isSlot'] = False
+            else:
+                node.data['isSlot'] = bool(data['isEntity'])
         else:
             node.data['isSlot'] = bool(data['isSlot'])
         if node.data['isSlot']:
             if 'entity' not in data:
                 raise_error(
                     'Key "entity" not found nearby "...%s...", slot content node must contains key "entity".' % str(data)[:64])
-            if 'slot' not in data:
-                raise_error(
-                    'Key "slot" not found nearby "...%s...", slot content node must contains key "slot".' % str(data)[:64])
             node.data['entity'] = data['entity']
             stat['entity'].add(node.data['entity'])
-            node.data['slot'] = data['slot']
+            if 'slot' not in data:
+                node.data['slot'] = ''
+            else:
+                node.data['slot'] = data['slot']
         else:
             if 'content' not in data or not isinstance(data['content'], Iterable):
                 return (False, )
